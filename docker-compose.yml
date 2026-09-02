@@ -25,7 +25,7 @@ services:
       dockerfile: Dockerfile
     container_name: aras2_web
     restart: unless-stopped
-    command: gunicorn accounting_project.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2
+    command: gunicorn accounting_project.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 4 --timeout 120 --access-logfile - --error-logfile -
     ports:
       - "8000:8000"
     environment:
@@ -50,7 +50,7 @@ services:
       dockerfile: Dockerfile
     container_name: aras2_celery_worker
     restart: unless-stopped
-    command: celery -A accounting_project worker -l INFO --concurrency=4
+    command: celery -A accounting_project worker -l INFO --concurrency=1 --max-tasks-per-child=50
     environment:
       - SECRET_KEY=docker-secret-key-change-in-production
       - DEBUG=True
