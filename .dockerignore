@@ -1,0 +1,77 @@
+# ==============================================================================
+# Docker Ignore File
+# Excludes unnecessary directories and files from the Docker build context.
+# ==============================================================================
+
+# Exclude front-end directory
+front/
+front/**
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Database files (ensure clean container environment)
+*.sqlite3
+*.db
+db.sqlite3
+
+# Celery local files
+celerybeat-schedule
+celerybeat.pid
+*.pid
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+
+# Git and IDE configs
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Test and coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Documentation and logs
+*.log
+docs/
+artifacts/
+.gemini/

@@ -1,0 +1,94 @@
+services:
+  # ==========================================
+  # Redis: Celery Message Broker & Result Store
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: aras2_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ==========================================
+  # Web: Django API (WSGI Gunicorn Server)
+  # ==========================================
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aras2_web
+    restart: unless-stopped
+    command: gunicorn accounting_project.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=docker-secret-key-change-in-production
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+
+  # ==========================================
+  # Celery Worker: Asynchronous Background Tasks
+  # ==========================================
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aras2_celery_worker
+    restart: unless-stopped
+    command: celery -A accounting_project worker -l INFO --concurrency=4
+    environment:
+      - SECRET_KEY=docker-secret-key-change-in-production
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+    volumes:
+      - .:/app
+
+  # ==========================================
+  # Celery Beat: Periodic Task Scheduler
+  # ==========================================
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aras2_celery_beat
+    restart: unless-stopped
+    command: celery -A accounting_project beat -l INFO
+    environment:
+      - SECRET_KEY=docker-secret-key-change-in-production
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+    volumes:
+      - .:/app
+
+volumes:
+  redis_data:
+  static_volume:
