@@ -59,7 +59,13 @@ class VoucherListAPIView(generics.ListAPIView):
         if end_date:
             queryset = queryset.filter(date__lte=end_date)
         if customer_code:
-            queryset = queryset.filter(customer__code__iexact=customer_code)
+            customer_id = Customer.objects.filter(
+                code__iexact=str(customer_code).strip()
+            ).values_list('id', flat=True).first()
+            if customer_id:
+                queryset = queryset.filter(customer_id=customer_id)
+            else:
+                queryset = queryset.none()
 
         return queryset.order_by('date', 'id')
 

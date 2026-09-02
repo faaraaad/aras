@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.db import models
+from django.db.models.functions import Lower
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 
@@ -19,6 +20,10 @@ class Customer(models.Model):
         verbose_name = "Customer"
         verbose_name_plural = "Customers"
         ordering = ['code']
+        indexes = [
+            # Functional index for fast case-insensitive code lookups (__iexact)
+            models.Index(Lower('code'), name='idx_cust_code_lower'),
+        ]
 
     def __str__(self):
         return f"{self.code} - {self.name}"
@@ -79,9 +84,10 @@ class Voucher(models.Model):
     class Meta:
         ordering = ['date', 'id']
         indexes = [
-            # Compound index covers both (customer, date) and (customer)-only lookups.
-            # A standalone date index is redundant — PostgreSQL can use this for date-only scans too.
-            models.Index(fields=['customer', 'date'], name='idx_voucher_cust_date'),
+            # Compound index covering customer filter, date range, and pagination order (date, id)
+            models.Index(fields=['customer', 'date', 'id'], name='idx_voucher_cust_date_id'),
+            # Date + id index for global date-range queries across all customers
+            models.Index(fields=['date', 'id'], name='idx_voucher_date_id'),
         ]
 
     def clean(self):
