@@ -74,7 +74,7 @@ services:
       dockerfile: Dockerfile
     container_name: aras2_celery_beat
     restart: unless-stopped
-    command: celery -A accounting_project beat -l INFO
+    command: celery -A accounting_project beat -l INFO --schedule=/tmp/celerybeat-schedule
     environment:
       - SECRET_KEY=docker-secret-key-change-in-production
       - DEBUG=True
